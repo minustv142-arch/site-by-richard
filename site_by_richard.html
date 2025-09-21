@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Site by Richard</title>
+  <style>
+    :root{
+      --bg: #000000;
+      --text: #ffffff;
+      --title: #ff2b2b;
+      --accent: #1f6feb;
+    }
+
+    /* Reset mínimo */
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      font-weight:700; /* TODO: todas as letras em negrito */
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      display:flex;
+      align-items:flex-start;
+      justify-content:center;
+      padding:24px;
+    }
+
+    .container{
+      width:100%;
+      max-width:980px;
+      background:rgba(255,255,255,0.02);
+      border-radius:12px;
+      padding:20px;
+      box-shadow:0 6px 30px rgba(0,0,0,0.6);
+    }
+
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+
+    h1{
+      margin:0;
+      color:var(--title); /* título vermelho */
+      font-size:clamp(20px,4vw,36px);
+      letter-spacing:0.5px;
+    }
+
+    .meta{font-size:14px;opacity:0.8}
+
+    .controls{
+      display:flex;gap:8px;align-items:center;flex-wrap:wrap
+    }
+
+    input[type="text"], input[type="url"], input[type="search"]{
+      padding:10px 12px;
+      border-radius:8px;
+      border:1px solid rgba(255,255,255,0.08);
+      background:rgba(255,255,255,0.02);
+      color:var(--text);
+      font-weight:700;
+      outline:none;
+      min-width:160px;
+    }
+
+    button{
+      padding:10px 12px;
+      border-radius:8px;
+      border:0;
+      cursor:pointer;
+      background:var(--accent);
+      color:white;
+      font-weight:800;
+    }
+
+    .link-list{margin-top:18px;display:grid;gap:8px}
+    .link-item{
+      padding:10px 12px;
+      border-radius:8px;
+      background:rgba(255,255,255,0.02);
+      display:flex;justify-content:space-between;align-items:center;gap:8px
+    }
+    .link-item a{color:var(--accent);text-decoration:none;font-weight:800}
+
+    .small{font-size:13px;opacity:0.85}
+
+    footer{margin-top:18px;text-align:right;color:rgba(255,255,255,0.7);font-size:13px}
+
+    .controls-section{display:flex;gap:8px;align-items:center}
+
+    @media (max-width:600px){
+      header{flex-direction:column;align-items:flex-start}
+      .controls{width:100%;justify-content:space-between}
+    }
+  </style>
+</head>
+<body>
+  <div class="container" role="main">
+    <header>
+      <div>
+        <h1>Meu Site — by richard</h1>
+        <div class="meta small">Fundo preto, letras em negrito, título vermelho.</div>
+      </div>
+
+      <div class="controls">
+        <!-- Seletor para alterar o fundo -->
+        <div class="controls-section">
+          <label class="small" for="bgPicker">Alterar fundo</label>
+          <input id="bgPicker" type="color" title="Escolha uma cor de fundo" value="#000000">
+          <button id="bgReset">Reset</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Barra de pesquisa que filtra a lista de links -->
+    <div style="margin-top:18px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <input id="search" type="search" placeholder="Pesquisar links..." aria-label="Pesquisar links">
+      <div style="flex:1"></div>
+      <div class="small">Pro tip: adicione links e busque por título ou URL.</div>
+    </div>
+
+    <!-- Formulário para adicionar links -->
+    <form id="addLinkForm" style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <input id="linkTitle" type="text" placeholder="Título do link" required>
+      <input id="linkUrl" type="url" placeholder="https://exemplo.com" required>
+      <button type="submit">Adicionar link</button>
+    </form>
+
+    <!-- Lista de links -->
+    <div class="link-list" id="links"></div>
+
+    <footer>
+      <div>by richard</div>
+    </footer>
+  </div>
+
+  <script>
+    // Script simples para gerenciar links, pesquisa e troca de fundo
+    (function(){
+      const lsKey = 'site_by_richard_links_v1';
+      const bgKey = 'site_by_richard_bg_v1';
+
+      const linkListEl = document.getElementById('links');
+      const addForm = document.getElementById('addLinkForm');
+      const titleInput = document.getElementById('linkTitle');
+      const urlInput = document.getElementById('linkUrl');
+      const searchInput = document.getElementById('search');
+      const bgPicker = document.getElementById('bgPicker');
+      const bgReset = document.getElementById('bgReset');
+
+      let links = JSON.parse(localStorage.getItem(lsKey) || '[]');
+
+      function render(filter){
+        linkListEl.innerHTML = '';
+        const f = (filter||'').toLowerCase();
+        const filtered = links.filter(l => l.title.toLowerCase().includes(f) || l.url.toLowerCase().includes(f));
+        if(filtered.length === 0){
+          const empty = document.createElement('div');
+          empty.className = 'small';
+          empty.textContent = 'Nenhum link adicionado ainda.';
+          linkListEl.appendChild(empty);
+          return;
+        }
+        filtered.forEach((l, idx) => {
+          const item = document.createElement('div');
+          item.className = 'link-item';
+
+          const left = document.createElement('div');
+          const a = document.createElement('a');
+          a.href = l.url;
+          a.target = '_blank';
+          a.rel = 'noopener noreferrer';
+          a.textContent = l.title;
+
+          const meta = document.createElement('div');
+          meta.className = 'small';
+          meta.textContent = l.url;
+
+          left.appendChild(a);
+          left.appendChild(meta);
+
+          const actions = document.createElement('div');
+          actions.style.display = 'flex';
+          actions.style.gap = '8px';
+
+          const del = document.createElement('button');
+          del.textContent = 'Remover';
+          del.type = 'button';
+          del.onclick = () => { if(confirm('Remover link "'+l.title+'"?')){ links.splice(idx,1); saveAndRender(); } };
+
+          actions.appendChild(del);
+
+          item.appendChild(left);
+          item.appendChild(actions);
+          linkListEl.appendChild(item);
+        });
+      }
+
+      function saveAndRender(){
+        localStorage.setItem(lsKey, JSON.stringify(links));
+        render(searchInput.value);
+      }
+
+      addForm.addEventListener('submit', function(e){
+        e.preventDefault();
+        const title = titleInput.value.trim();
+        const url = urlInput.value.trim();
+        if(!title || !url) return;
+        links.unshift({title,url});
+        titleInput.value = '';
+        urlInput.value = '';
+        saveAndRender();
+      });
+
+      searchInput.addEventListener('input', () => render(searchInput.value));
+
+      // Fundo: cor selecionada ou reset
+      const savedBg = localStorage.getItem(bgKey);
+      if(savedBg){
+        document.documentElement.style.setProperty('--bg', savedBg);
+        bgPicker.value = rgbToHex(savedBg) || '#000000';
+      }
+
+      bgPicker.addEventListener('input', (e)=>{
+        const c = e.target.value;
+        document.documentElement.style.setProperty('--bg', c);
+        localStorage.setItem(bgKey,c);
+      });
+
+      bgReset.addEventListener('click', ()=>{
+        const def = '#000000';
+        document.documentElement.style.setProperty('--bg', def);
+        localStorage.removeItem(bgKey);
+        bgPicker.value = def;
+      });
+
+      // Helpers
+      function rgbToHex(rgb){
+        // aceita formatos: #xxxxxx ou rgb(...)
+        if(!rgb) return null;
+        if(rgb.startsWith('#')) return rgb;
+        const m = rgb.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
+        if(!m) return null;
+        function h(n){ return Number(n).toString(16).padStart(2,'0'); }
+        return '#'+h(m[1])+h(m[2])+h(m[3]);
+      }
+
+      // Inicial render
+      render();
+    })();
+  </script>
+</body>
+</html>
